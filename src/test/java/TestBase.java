@@ -3,8 +3,5 @@
 public class TestBase {
     protected HTTPRequest request = new HTTPRequest("");
 
-    public TestBase(){
-
-    }
-
+    public TestBase(){}
 }
