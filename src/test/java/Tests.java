@@ -14,15 +14,11 @@ public class Tests extends TestBase {
        String solResponse = HTTPRequest.RequestService.sendHTTPRequest(request);
 
        //get sol JSONs
-       JSONObject solJSONObj = new JSONObject(solResponse);
-       JSONArray solResponseAsArray = solJSONObj.optJSONArray("photos");
-       List<JSONObject> solResponseList = new ArrayList<>();
-       for (int i = 0; i < solResponseAsArray.length(); i++) {
-           solResponseList.add((JSONObject) solResponseAsArray.get(i));
-       }
+       List<JSONObject> solResponseList = util.getJSONListFromResponse(solResponse,"photos");
+
        //sort retrieved JSONs by id's
-       Comparator<JSONObject> byId = Comparator.comparing(element -> element.getInt("id"));
-       List<JSONObject> solSortedJson = solResponseList.stream().sorted(byId).collect(Collectors.toList());
+       List<JSONObject> solSortedJson = util.sortJSON(solResponseList);
+
        //get the first 10 sol photos
        List<String> solPhotosList = solSortedJson.stream()
                .map(el -> (String) JsonPath.parse(el.toString())
@@ -36,19 +32,14 @@ public class Tests extends TestBase {
        request.setRequestParams("?earth_date=" + earthDate);
        String earthResponse = HTTPRequest.RequestService.sendHTTPRequest(request);
 
-       JSONObject earthJSONObj = new JSONObject(earthResponse);
-       JSONArray earthResponseAsArray = earthJSONObj.optJSONArray("photos");
+       List<JSONObject> earthResponseList = util.getJSONListFromResponse(earthResponse,"photos");
+       List<JSONObject> earthSortedJson = util.sortJSON(earthResponseList);
 
-       List<JSONObject> earthResponseList = new ArrayList<>();
-       for (int i = 0; i < earthResponseAsArray.length(); i++) {
-           earthResponseList.add((JSONObject) earthResponseAsArray.get(i));
-       }
-
-       List<JSONObject> earthSortedJson = solResponseList.stream().sorted(byId).collect(Collectors.toList());
        //get the first 10 earth date photos
        List<String> earthPhotosList = earthSortedJson.stream()
                .map(el -> (String) JsonPath.parse(el.toString())
                        .read("$.img_src")).limit(10).collect(Collectors.toList());
+
        //read photo's bytes
        ArrayList<byte[]> solPhotoList = new ArrayList<>();
        for (String solPhoto : solPhotosList) {
