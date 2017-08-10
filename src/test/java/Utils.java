@@ -1,4 +1,5 @@
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Utils {
+    Logger logger = Logger.getLogger(Utils.class);
 
     public byte[] imageToByteArray (String desiredUrl){
         InputStream is;
@@ -22,8 +24,8 @@ public class Utils {
             is.close();
             return imageBytes;
         } catch (IOException e) {
-            System.err.printf("Failed while reading bytes from %s: %s",
-                    url.toExternalForm(), e.getMessage());
+            logger.info("Failed while reading bytes from %s: %s"
+                    + url.toExternalForm() + e.getMessage());
             return null;
         }
     }
@@ -34,11 +36,41 @@ public class Utils {
 
     public List<JSONObject> getJSONListFromResponse (String response, String key) {
         JSONObject JSONObj = new JSONObject(response);
-        JSONArray ResponseAsArray = JSONObj.optJSONArray(key);
+        JSONArray responseAsArray = JSONObj.optJSONArray(key);
         List<JSONObject> responseList = new ArrayList<>();
-        for (int i = 0; i < ResponseAsArray.length(); i++) {
-            responseList.add((JSONObject) ResponseAsArray.get(i));
+        for (int i = 0; i < responseAsArray.length(); i++) {
+            responseList.add((JSONObject) responseAsArray.get(i));
         }
         return responseList;
+    }
+
+    public List<String> getStringListFromJSONArray (String response, String parseJSONkey, String JSONkey, String valueKey, String targetValue) {
+        List<JSONObject> solResponseList = getJSONListFromResponse(response,parseJSONkey);
+        List<String> result = new ArrayList<>();
+        JSONArray names = solResponseList.get(0).getJSONObject(JSONkey).getJSONArray(valueKey);
+        for(int i=0; i<names.length(); i++){
+            List <JSONObject> objects = new ArrayList<>();
+            objects.add((JSONObject) names.get(i));
+            for (JSONObject ob : objects){
+                result.add(ob.getString(targetValue));
+            }
+        }
+        return result;
+    }
+
+    public boolean compareCountOfPhotos (List<Integer> input) {
+        boolean result = true;
+        for(int i=0; i<input.size(); i++){
+            for(int j=1; j<input.size()-1;j++){
+                try{if((input.get(i)%input.get(j))>=10) {
+                    result = false;
+                    }
+                }catch (ArithmeticException e){
+                    logger.info("Division by zero. One of cameras didn't take any photo");
+                    result = false;
+                }
+            }
+        }
+        return result;
     }
 }
